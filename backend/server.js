@@ -1,6 +1,20 @@
 require('dotenv').config();
 const express = require('express');
 const cors    = require('cors');
+const path    = require('path');
+const fs      = require('fs');
+
+// Case-insensitive route loader
+function req(p) {
+  const abs = path.join(__dirname, p);
+  // try exact, then capitalised variations
+  const variants = [abs, abs.replace('/routes/', '/Routes/').replace('/db/', '/DB/').replace('/middleware/', '/Middleware/')];
+  for (const v of variants) {
+    if (fs.existsSync(v)) return require(v);
+    if (fs.existsSync(v + '.js')) return require(v);
+  }
+  throw new Error(`Cannot find module: ${p}`);
+}
 
 const authRoutes          = require('./routes/auth');
 const supplierRoutes      = require('./routes/suppliers');
