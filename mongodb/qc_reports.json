@@ -1,0 +1,111 @@
+[
+  {
+    "reportID": "QC-2024-001",
+    "partID": "PART-001",
+    "inspectorID": "EMP-003",
+    "inspectionType": "dimensional_ndt",
+    "overallResult": "pass",
+    "timestamp": "2024-02-13T09:30:00Z",
+    "versionHistory": [
+      { "version": 1, "editedBy": "EMP-003", "editedAt": "2024-02-13T09:30:00Z", "note": "Initial report" }
+    ],
+    "dimensionalCheck": {
+      "nominalLength_mm": 1200,
+      "measuredLength_mm": 1199.8,
+      "tolerance_mm": 0.5,
+      "result": "pass"
+    },
+    "ndtCheck": {
+      "method": "ultrasonic",
+      "defectsFound": false,
+      "scanCoverage_pct": 100,
+      "result": "pass"
+    },
+    "attachments": [
+      { "fileName": "qc_scan_PART001_batch112.pdf", "fileType": "pdf", "storageRef": "docs/qc/qc_scan_PART001_batch112.pdf" }
+    ]
+  },
+  {
+    "reportID": "QC-2024-002",
+    "partID": "PART-001",
+    "inspectorID": "EMP-004",
+    "inspectionType": "environmental",
+    "overallResult": "fail",
+    "timestamp": "2024-02-21T14:00:00Z",
+    "versionHistory": [
+      { "version": 1, "editedBy": "EMP-004", "editedAt": "2024-02-21T14:00:00Z", "note": "Initial report" },
+      { "version": 2, "editedBy": "EMP-004", "editedAt": "2024-02-22T10:00:00Z", "note": "Added corrective action notes" }
+    ],
+    "environmentalTest": {
+      "tempRange_C": [-55, 85],
+      "cycleCount": 200,
+      "humidityExposure_pct": 95,
+      "thermalShockEvents": 3,
+      "result": "fail",
+      "failureNote": "Surface delamination observed after 180 cycles"
+    },
+    "attachments": []
+  },
+  {
+    "reportID": "QC-2024-003",
+    "partID": "PART-002",
+    "inspectorID": "EMP-003",
+    "inspectionType": "dimensional",
+    "overallResult": "pass",
+    "timestamp": "2024-03-02T11:15:00Z",
+    "versionHistory": [
+      { "version": 1, "editedBy": "EMP-003", "editedAt": "2024-03-02T11:15:00Z", "note": "Initial report" }
+    ],
+    "dimensionalCheck": {
+      "nominalLength_mm": 340,
+      "measuredLength_mm": 340.003,
+      "tolerance_mm": 0.01,
+      "result": "pass"
+    },
+    "attachments": []
+  },
+  {
+    "reportID": "QC-2024-004",
+    "partID": "PART-003",
+    "inspectorID": "EMP-004",
+    "inspectionType": "ndt",
+    "overallResult": "pass",
+    "timestamp": "2024-03-20T08:45:00Z",
+    "versionHistory": [
+      { "version": 1, "editedBy": "EMP-004", "editedAt": "2024-03-20T08:45:00Z", "note": "Initial report" }
+    ],
+    "ndtCheck": {
+      "method": "x_ray",
+      "defectsFound": false,
+      "scanCoverage_pct": 100,
+      "result": "pass"
+    },
+    "attachments": [
+      { "fileName": "xray_PART003_march.jpg", "fileType": "image", "storageRef": "docs/qc/xray_PART003_march.jpg" }
+    ]
+  },
+  {
+    "reportID": "QC-2024-005",
+    "partID": "PART-004",
+    "inspectorID": "EMP-003",
+    "inspectionType": "dimensional_ndt",
+    "overallResult": "pass",
+    "timestamp": "2024-03-22T13:00:00Z",
+    "versionHistory": [
+      { "version": 1, "editedBy": "EMP-003", "editedAt": "2024-03-22T13:00:00Z", "note": "Initial report" }
+    ],
+    "dimensionalCheck": {
+      "nominalLength_mm": 890,
+      "measuredLength_mm": 889.95,
+      "tolerance_mm": 0.2,
+      "result": "pass"
+    },
+    "ndtCheck": {
+      "method": "ultrasonic",
+      "defectsFound": false,
+      "scanCoverage_pct": 98,
+      "result": "pass"
+    },
+    "attachments": []
+  }
+]

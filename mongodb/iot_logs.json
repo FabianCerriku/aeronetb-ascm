@@ -1,0 +1,50 @@
+[
+  {
+    "equipmentID": "EQP-001",
+    "facilityID": "FAC-001",
+    "timestamp": "2024-03-20T08:00:00Z",
+    "readings": { "temperature_C": 68.2, "vibration_ms2": 0.10, "pressure_bar": 3.6, "cycleCount": 14200, "gpsPosition": { "lat": 52.9225, "lng": -1.4746 } },
+    "alerts": [], "source": "mqtt_stream"
+  },
+  {
+    "equipmentID": "EQP-001",
+    "facilityID": "FAC-001",
+    "timestamp": "2024-03-20T09:00:00Z",
+    "readings": { "temperature_C": 72.4, "vibration_ms2": 0.12, "pressure_bar": 3.8, "cycleCount": 14820, "gpsPosition": { "lat": 52.9225, "lng": -1.4746 } },
+    "alerts": [], "source": "mqtt_stream"
+  },
+  {
+    "equipmentID": "EQP-002",
+    "facilityID": "FAC-001",
+    "timestamp": "2024-03-20T08:00:00Z",
+    "readings": { "temperature_C": 195.0, "vibration_ms2": 0.05, "pressure_bar": 8.2, "cycleCount": 3100, "gpsPosition": { "lat": 52.9225, "lng": -1.4746 } },
+    "alerts": [{ "parameter": "temperature_C", "threshold": 190, "breached": true, "severity": "warning" }],
+    "source": "mqtt_stream"
+  },
+  {
+    "equipmentID": "EQP-002",
+    "facilityID": "FAC-001",
+    "timestamp": "2024-03-20T10:00:00Z",
+    "readings": { "temperature_C": 198.5, "vibration_ms2": 0.06, "pressure_bar": 8.4, "cycleCount": 3105, "gpsPosition": { "lat": 52.9225, "lng": -1.4746 } },
+    "alerts": [{ "parameter": "temperature_C", "threshold": 190, "breached": true, "severity": "warning" }],
+    "source": "mqtt_stream"
+  },
+  {
+    "equipmentID": "EQP-005",
+    "facilityID": "FAC-003",
+    "timestamp": "2024-03-20T07:30:00Z",
+    "readings": { "temperature_C": 45.0, "vibration_ms2": 2.80, "pressure_bar": 120.5, "cycleCount": 88200, "gpsPosition": { "lat": 47.4490, "lng": -122.3093 } },
+    "alerts": [
+      { "parameter": "vibration_ms2", "threshold": 2.0, "breached": true, "severity": "critical" },
+      { "parameter": "cycleCount",    "threshold": 80000, "breached": true, "severity": "warning" }
+    ],
+    "source": "mqtt_stream"
+  },
+  {
+    "equipmentID": "EQP-003",
+    "facilityID": "FAC-002",
+    "timestamp": "2024-03-20T09:15:00Z",
+    "readings": { "temperature_C": 22.1, "vibration_ms2": 0.03, "pressure_bar": 1.0, "cycleCount": 5400, "gpsPosition": { "lat": 53.6355, "lng": 9.9349 } },
+    "alerts": [], "source": "mqtt_stream"
+  }
+]

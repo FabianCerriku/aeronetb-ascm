@@ -1,0 +1,32 @@
+[
+  {
+    "partID": "PART-001",
+    "baselineSpecs": {
+      "mechanicalProperties": { "tensileStrength_MPa": 450, "fatigueLimit_MPa": 200, "yieldPoint_MPa": 380 },
+      "processDetails": { "heatTreatment": "T6 annealing", "machiningSteps": ["CNC milling","surface grinding"], "surfaceFinish": "anodised" }
+    },
+    "cadModelRef": "cad/a320-fuselage-panel-v3.stp",
+    "multimedia": [
+      { "type": "engineering_drawing", "url": "docs/drawings/PART-001-v3.pdf" },
+      { "type": "prototype_image",    "url": "docs/images/PART-001-photo.jpg" }
+    ],
+    "supplierCustomizations": [
+      { "supplierID": "SUP-001", "notes": "RFID tags embedded; anti-corrosion coating applied" },
+      { "supplierID": "SUP-002", "notes": "Reinforced composite layering; shock sensors in packaging" }
+    ],
+    "techNotes": "Handle with anti-static gloves. Avoid direct sunlight during storage."
+  },
+  {
+    "partID": "PART-002",
+    "baselineSpecs": {
+      "mechanicalProperties": { "tensileStrength_MPa": 900, "fatigueLimit_MPa": 450, "yieldPoint_MPa": 830 },
+      "processDetails": { "heatTreatment": "Grade 5 Ti-6Al-4V", "machiningSteps": ["5-axis CNC","EDM finishing"], "surfaceFinish": "polished" }
+    },
+    "cadModelRef": "cad/wing-bracket-v2.stp",
+    "multimedia": [],
+    "supplierCustomizations": [
+      { "supplierID": "SUP-003", "notes": "Precision CNC to ±0.01mm; certified measurement report included" }
+    ],
+    "techNotes": "Store in nitrogen-purged packaging. Do not expose to chloride environments."
+  }
+]

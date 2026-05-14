@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeroNetB ASCM — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/api.js"></script>
+<style>
+/* ── Reset & base ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f1f5f9;color:#1e293b;display:flex;min-height:100vh}
+
+/* ── Sidebar ──────────────────────────────────────────── */
+.sidebar{width:240px;background:#0f1b2d;display:flex;flex-direction:column;flex-shrink:0;position:fixed;height:100vh;z-index:100}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.sidebar-logo .logo-icon{font-size:22px;background:linear-gradient(135deg,#2563eb,#1d4ed8);width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px}
+.sidebar-logo h2{color:#fff;font-size:14px;font-weight:700;letter-spacing:-0.3px}
+.sidebar-logo p{color:#475569;font-size:11px;margin-top:2px}
+.user-card{margin:16px 12px;background:rgba(255,255,255,0.05);border-radius:10px;padding:12px}
+.user-card .name{color:#e2e8f0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-card .role-badge{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.badge-procurement{background:rgba(59,130,246,0.2);color:#93c5fd}
+.badge-quality_inspector{background:rgba(16,185,129,0.2);color:#6ee7b7}
+.badge-supply_chain_manager{background:rgba(168,85,247,0.2);color:#d8b4fe}
+.badge-equipment_engineer{background:rgba(245,158,11,0.2);color:#fcd34d}
+.badge-auditor{background:rgba(239,68,68,0.2);color:#fca5a5}
+.nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section{padding:10px 16px 4px;font-size:10px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:0.8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;color:#94a3b8;font-size:13px;cursor:pointer;border-radius:0;transition:all 0.15s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:#e2e8f0}
+.nav-item.active{background:rgba(37,99,235,0.15);color:#93c5fd;border-left-color:#2563eb}
+.nav-item .icon{width:18px;text-align:center;font-size:15px}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,0.07)}
+.btn-logout{width:100%;padding:9px;background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s}
+.btn-logout:hover{background:rgba(239,68,68,0.2)}
+
+/* ── Main content ─────────────────────────────────────── */
+.main{margin-left:240px;flex:1;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar h1{font-size:17px;font-weight:700;color:#0f172a}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.notif-badge{position:relative;cursor:pointer}
+.notif-badge span{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:9px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.content{padding:24px 28px}
+
+/* ── Cards ────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:16px}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.stat-icon.blue{background:#eff6ff}
+.stat-icon.green{background:#f0fdf4}
+.stat-icon.amber{background:#fffbeb}
+.stat-icon.red{background:#fef2f2}
+.stat-icon.purple{background:#faf5ff}
+.stat-info .value{font-size:26px;font-weight:700;color:#0f172a;line-height:1}
+.stat-info .label{font-size:12px;color:#64748b;margin-top:4px}
+
+/* ── Panel cards ──────────────────────────────────────── */
+.panel{background:#fff;border-radius:14px;border:1px solid #e2e8f0;margin-bottom:20px;overflow:hidden}
+.panel-header{padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:14px;font-weight:700;color:#0f172a}
+.panel-body{padding:20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+/* ── Tables ───────────────────────────────────────────── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e2e8f0}
+td{padding:11px 14px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafc}
+
+/* ── Badges ───────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;text-transform:capitalize;white-space:nowrap}
+.badge-ok,.badge-pass,.badge-approved,.badge-completed,.badge-delivered{background:#f0fdf4;color:#15803d}
+.badge-warning,.badge-pending,.badge-placed,.badge-confirmed{background:#fffbeb;color:#92400e}
+.badge-critical,.badge-fail,.badge-rejected,.badge-dispatched{background:#fef2f2;color:#b91c1c}
+.badge-transit,.badge-in_transit{background:#eff6ff;color:#1d4ed8}
+.badge-arrived,.badge-cleared{background:#f0fdf4;color:#15803d}
+
+/* ── Buttons ──────────────────────────────────────────── */
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#2563eb;color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-success{background:#16a34a;color:#fff}
+.btn-success:hover{background:#15803d}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-outline{background:transparent;border:1px solid #e2e8f0;color:#374151}
+.btn-outline:hover{background:#f8fafc}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-danger:hover{background:#dc2626}
+
+/* ── Forms ────────────────────────────────────────────── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{margin-bottom:0}
+.form-group label{display:block;font-size:12px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;outline:none;transition:border-color 0.15s;background:#fff}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-actions{margin-top:20px;display:flex;gap:10px;justify-content:flex-end}
+
+/* ── Alerts ───────────────────────────────────────────── */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+.alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d}
+.alert-error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+.alert-warning{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.alert-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8}
+
+/* ── Equipment status cards ───────────────────────────── */
+.equip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px}
+.equip-card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:16px;border-top:4px solid #e2e8f0}
+.equip-card.ok{border-top-color:#16a34a}
+.equip-card.warning{border-top-color:#f59e0b}
+.equip-card.critical{border-top-color:#ef4444}
+.equip-card.offline{border-top-color:#94a3b8}
+.equip-card h4{font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px}
+.equip-card .facility{font-size:11px;color:#64748b;margin-bottom:10px}
+.equip-card .readings{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.reading{background:#f8fafc;border-radius:6px;padding:6px 8px}
+.reading .r-val{font-size:14px;font-weight:700;color:#0f172a}
+.reading .r-label{font-size:10px;color:#64748b;margin-top:1px}
+
+/* ── Chart containers ─────────────────────────────────── */
+.chart-container{position:relative;height:260px}
+
+/* ── View sections ────────────────────────────────────── */
+.view-section{display:none}
+.view-section.active{display:block}
+
+/* ── Read-only banner ─────────────────────────────────── */
+.readonly-banner{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;margin-bottom:20px}
+
+/* ── Loader ───────────────────────────────────────────── */
+.loader{display:flex;align-items:center;justify-content:center;padding:40px;color:#94a3b8;font-size:14px;gap:10px}
+
+/* ── Notification dot ─────────────────────────────────── */
+#alertCount{display:none}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">✈</div>
+    <h2>AeroNetB ASCM</h2>
+    <p>Supply Chain Management</p>
+  </div>
+
+  <div class="user-card">
+    <div class="name" id="sidebarName">Loading…</div>
+    <span class="role-badge" id="sidebarRoleBadge"></span>
+  </div>
+
+  <nav class="nav" id="sidebarNav"></nav>
+
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="logout()">⏻ Sign Out</button>
+  </div>
+</aside>
+
+<!-- ══ MAIN ═════════════════════════════════════════════ -->
+<main class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Dashboard</h1>
+    <div class="topbar-right">
+      <div class="notif-badge" onclick="showView('iot')" title="Active alerts">
+        🔔 <span id="alertCount">0</span>
+      </div>
+      <span id="topbarUser" style="font-size:13px;color:#64748b"></span>
+    </div>
+  </div>
+
+  <div class="content" id="mainContent">
+    <div class="loader">⏳ Loading dashboard…</div>
+  </div>
+</main>
+
+<!-- ══ VIEW TEMPLATES (hidden, cloned by JS) ════════════ -->
+<div id="templates" style="display:none">
+
+  <!-- ── Procurement Officer ──────────────────────────── -->
+  <div id="tpl-procurement_officer">
+    <div id="po-alerts"></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon blue">📦</div><div class="stat-info"><div class="value" id="po-total">—</div><div class="label">Total Orders</div></div></div>
+      <div class="stat-card"><div class="stat-icon amber">⏳</div><div class="stat-info"><div class="value" id="po-pending">—</div><div class="label">Pending Orders</div></div></div>
+      <div class="stat-card"><div class="stat-icon red">⚠️</div><div class="stat-info"><div class="value" id="po-delayed">—</div><div class="label">Delayed Shipments</div></div></div>
+      <div class="stat-card"><div class="stat-icon green">🏭</div><div class="stat-info"><div class="value" id="po-suppliers">—</div><div class="label">Active Suppliers</div></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📋 Recent Orders</span>
+          <select id="po-statusFilter" class="btn btn-outline btn-sm" onchange="filterOrders()" style="padding:5px 8px">
+            <option value="">All Status</option>
+            <option value="placed">Placed</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="dispatched">Dispatched</option>
+            <option value="delivered">Delivered</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Order ID</th><th>Supplier</th><th>Part</th><th>Desired</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="po-ordersTable"><tr><td colspan="6" class="loader">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">➕ New Purchase Order</span></div>
+        <div class="panel-body">
+          <div id="po-formMsg"></div>
+          <div class="form-grid">
+            <div class="form-group"><label>Order ID</label><input id="po-orderId" placeholder="PO-2024-011"></div>
+            <div class="form-group"><label>Supplier</label><select id="po-supplierId"><option value="">Select supplier…</option></select></div>
+            <div class="form-group"><label>Part</label><select id="po-partId"><option value="">Select part…</option></select></div>
+            <div class="form-group"><label>Order Date</label><input type="date" id="po-orderDate"></div>
+            <div class="form-group"><label>Desired Delivery</label><input type="date" id="po-desiredDelivery"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-primary" onclick="createOrder()">🚀 Create Order</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">🏭 Suppliers</span></div>
+      <div class="panel-body" style="padding:0">
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Business Name</th><th>Accreditation</th><th>Email</th><th>Parts</th></tr></thead>
+          <tbody id="po-suppliersTable"><tr><td colspan="5" class="loader">Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quality Inspector ────────────────────────────── -->
+  <div id="tpl-quality_inspector">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="value" id="qi-pass">—</div><div class="label">Reports Passed</div></div></div>
+      <div class="stat-card"><div class="stat-icon red">❌</div><div class="stat-info"><div class="value" id="qi-fail">—</div><div class="label">Reports Failed</div></div></div>
+      <div class="stat-card"><div class="stat-icon amber">📄</div><div class="stat-info"><div class="value" id="qi-certs">—</div><div class="label">Certifications</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple">🔒</div><div class="stat-info"><div class="value" id="qi-approved">—</div><div class="label">Approved & Locked</div></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🔬 QC Reports</span>
+          <select id="qi-resultFilter" class="btn btn-outline btn-sm" onchange="filterQCReports()" style="padding:5px 8px">
+            <option value="">All Results</option>
+            <option value="pass">Pass</option>
+            <option value="fail">Fail</option>
+          </select>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Report ID</th><th>Part</th><th>Type</th><th>Result</th><th>Date</th></tr></thead>
+            <tbody id="qi-reportsTable"><tr><td colspan="5" class="loader">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">➕ New QC Report</span></div>
+        <div class="panel-body">
+          <div id="qi-formMsg"></div>
+          <div class="form-grid">
+            <div class="form-group"><label>Report ID</label><input id="qi-reportId" placeholder="QC-2024-006"></div>
+            <div class="form-group"><label>Part ID</label><input id="qi-partId" placeholder="PART-001"></div>
+            <div class="form-group"><label>Inspection Type</label>
+              <select id="qi-type">
+                <option value="dimensional">Dimensional</option>
+                <option value="ndt">NDT</option>
+                <option value="environmental">Environmental</option>
+                <option value="dimensional_ndt">Dimensional + NDT</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Overall Result</label>
+              <select id="qi-result"><option value="pass">Pass</option><option value="fail">Fail</option></select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:14px"><label>Notes</label><textarea id="qi-notes" placeholder="Inspection notes…"></textarea></div>
+          <div class="form-actions"><button class="btn btn-success" onclick="createQCReport()">📋 Submit Report</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">🏅 Certifications</span></div>
+      <div class="panel-body" style="padding:0">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Cert ID</th><th>Part</th><th>Inspector</th><th>Status</th><th>Immutable</th><th>Action</th></tr></thead>
+          <tbody id="qi-certsTable"><tr><td colspan="6" class="loader">Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Supply Chain Manager ──────────────────────────── -->
+  <div id="tpl-supply_chain_manager">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon blue">🚢</div><div class="stat-info"><div class="value" id="scm-total">—</div><div class="label">Total Shipments</div></div></div>
+      <div class="stat-card"><div class="stat-icon amber">🔄</div><div class="stat-info"><div class="value" id="scm-transit">—</div><div class="label">In Transit</div></div></div>
+      <div class="stat-card"><div class="stat-icon red">⏰</div><div class="stat-info"><div class="value" id="scm-delayed">—</div><div class="label">Delayed</div></div></div>
+      <div class="stat-card"><div class="stat-icon green">📈</div><div class="stat-info"><div class="value" id="scm-ontime">—%</div><div class="label">Avg On-Time Rate</div></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📊 Supplier Performance (On-Time %)</span></div>
+        <div class="panel-body"><div class="chart-container"><canvas id="scm-perfChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">⚠️ Delayed Shipments</span></div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Shipment</th><th>Supplier</th><th>Part</th><th>ETA</th><th>Days Late</th></tr></thead>
+            <tbody id="scm-delayedTable"><tr><td colspan="5" class="loader">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">🚢 All Shipments</span></div>
+      <div class="panel-body" style="padding:0">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Shipment ID</th><th>Order</th><th>Supplier</th><th>Part</th><th>Tracking</th><th>ETA</th><th>Status</th></tr></thead>
+          <tbody id="scm-shipmentsTable"><tr><td colspan="7" class="loader">Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Equipment Engineer ────────────────────────────── -->
+  <div id="tpl-equipment_engineer">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="value" id="ee-ok">—</div><div class="label">Operational</div></div></div>
+      <div class="stat-card"><div class="stat-icon amber">⚠️</div><div class="stat-info"><div class="value" id="ee-warning">—</div><div class="label">Warning</div></div></div>
+      <div class="stat-card"><div class="stat-icon red">🚨</div><div class="stat-info"><div class="value" id="ee-critical">—</div><div class="label">Critical</div></div></div>
+      <div class="stat-card"><div class="stat-icon blue">📡</div><div class="stat-info"><div class="value" id="ee-total">—</div><div class="label">Total Equipment</div></div></div>
+    </div>
+
+    <div id="ee-alertsBanner"></div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">🏭 Equipment Status</span></div>
+      <div class="panel-body">
+        <div class="equip-grid" id="ee-equipGrid"><div class="loader">Loading…</div></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📊 Equipment Status Overview</span></div>
+        <div class="panel-body"><div class="chart-container"><canvas id="ee-statusChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📡 Latest IoT Readings</span></div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Equipment</th><th>Temp (°C)</th><th>Vibration</th><th>Pressure</th><th>Alerts</th></tr></thead>
+            <tbody id="ee-iotTable"><tr><td colspan="5" class="loader">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Auditor ───────────────────────────────────────── -->
+  <div id="tpl-auditor">
+    <div class="readonly-banner">🔒 Auditor View — Read-Only Access. No modifications permitted.</div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon purple">🏅</div><div class="stat-info"><div class="value" id="aud-total">—</div><div class="label">Total Certifications</div></div></div>
+      <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="value" id="aud-approved">—</div><div class="label">Approved</div></div></div>
+      <div class="stat-card"><div class="stat-icon amber">⏳</div><div class="stat-info"><div class="value" id="aud-pending">—</div><div class="label">Pending</div></div></div>
+      <div class="stat-card"><div class="stat-icon blue">📝</div><div class="stat-info"><div class="value" id="aud-logs">—</div><div class="label">Audit Log Entries</div></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🏅 Certifications (Read-Only)</span></div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Cert ID</th><th>Part</th><th>Inspector</th><th>Status</th><th>Immutable</th><th>Approved</th></tr></thead>
+            <tbody id="aud-certsTable"><tr><td colspan="6" class="loader">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📝 Audit Log</span></div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Target</th></tr></thead>
+            <tbody id="aud-logTable"><tr><td colspan="4" class="loader">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">🔬 QC Reports (Read-Only)</span></div>
+      <div class="panel-body" style="padding:0">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Report ID</th><th>Part</th><th>Inspector</th><th>Type</th><th>Result</th><th>Date</th><th>Version</th></tr></thead>
+          <tbody id="aud-reportsTable"><tr><td colspan="7" class="loader">Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end #templates -->
+
+<script>
+// ── Global state ───────────────────────────────────────────
+let currentUser = null;
+let allOrders   = [];
+let allQCReports= [];
+let perfChart   = null;
+let statusChart = null;
+
+// ── Init ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  const token = getToken();
+  if (!token) { window.location.href = 'index.html'; return; }
+
+  currentUser = getUser();
+  if (!currentUser) { logout(); return; }
+
+  setupSidebar();
+  await loadView(currentUser.role);
+  checkAlerts();
+});
+
+// ── Sidebar ────────────────────────────────────────────────
+function setupSidebar() {
+  document.getElementById('sidebarName').textContent  = currentUser.fullName;
+  document.getElementById('topbarUser').textContent   = currentUser.fullName;
+  const badge = document.getElementById('sidebarRoleBadge');
+  badge.textContent  = currentUser.role.replace(/_/g,' ');
+  badge.className    = `role-badge badge-${currentUser.role}`;
+
+  const navDefs = {
+    procurement_officer:  [['📦','Orders','procurement_officer'],['🏭','Suppliers','procurement_officer']],
+    quality_inspector:    [['🔬','QC Reports','quality_inspector'],['🏅','Certifications','quality_inspector']],
+    supply_chain_manager: [['🚢','Shipments & KPIs','supply_chain_manager']],
+    equipment_engineer:   [['📡','IoT & Equipment','equipment_engineer']],
+    auditor:              [['🔒','Compliance & Audit','auditor']]
+  };
+
+  const nav = document.getElementById('sidebarNav');
+  const items = navDefs[currentUser.role] || [];
+  nav.innerHTML = `<div class="nav-section">Navigation</div>` +
+    items.map(([icon,label,view]) =>
+      `<div class="nav-item active" onclick="showView('${view}')">`+
+      `<span class="icon">${icon}</span>${label}</div>`
+    ).join('');
+}
+
+// ── View router ────────────────────────────────────────────
+async function loadView(role) {
+  const tpl = document.getElementById(`tpl-${role}`);
+  if (!tpl) return;
+
+  const content = document.getElementById('mainContent');
+  content.innerHTML = tpl.innerHTML;
+
+  const titles = {
+    procurement_officer:  '📦 Procurement Dashboard',
+    quality_inspector:    '🔬 Quality Control Dashboard',
+    supply_chain_manager: '🚢 Supply Chain Dashboard',
+    equipment_engineer:   '📡 Equipment & IoT Dashboard',
+    auditor:              '🔒 Compliance & Audit Dashboard'
+  };
+  document.getElementById('pageTitle').textContent = titles[role] || 'Dashboard';
+
+  // Load data for this role
+  const loaders = {
+    procurement_officer:  loadProcurementData,
+    quality_inspector:    loadQualityData,
+    supply_chain_manager: loadSCMData,
+    equipment_engineer:   loadEngineerData,
+    auditor:              loadAuditorData
+  };
+  if (loaders[role]) await loaders[role]();
+}
+
+function showView(role) { loadView(role); }
+
+// ── Helpers ────────────────────────────────────────────────
+function fmt(date) { return date ? new Date(date).toLocaleDateString('en-GB') : '—'; }
+function fmtTime(date){ return date ? new Date(date).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'}) : '—'; }
+
+function badge(status) {
+  const cls = {
+    pass:'badge-pass',fail:'badge-fail',approved:'badge-approved',
+    pending:'badge-pending',placed:'badge-placed',confirmed:'badge-confirmed',
+    dispatched:'badge-dispatched',delivered:'badge-delivered',completed:'badge-completed',
+    in_transit:'badge-transit',arrived:'badge-arrived',ok:'badge-ok',
+    warning:'badge-warning',critical:'badge-critical'
+  }[status?.toLowerCase()] || 'badge-pending';
+  return `<span class="badge ${cls}">${status||'—'}</span>`;
+}
+
+function showMsg(id, type, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+  setTimeout(() => { if(el) el.innerHTML=''; }, 5000);
+}
+
+async function checkAlerts() {
+  try {
+    const alerts = await IoT.alerts();
+    const count  = alerts.length;
+    const el     = document.getElementById('alertCount');
+    if (count > 0) { el.textContent = count; el.style.display = 'flex'; }
+  } catch(_) {}
+}
+
+// ══════════════════════════════════════════════════════════
+// PROCUREMENT OFFICER
+// ══════════════════════════════════════════════════════════
+async function loadProcurementData() {
+  try {
+    const [orders, delayed, suppliers] = await Promise.all([
+      Orders.list(), Orders.delayed(), Suppliers.list()
+    ]);
+    allOrders = orders;
+
+    // Stats
+    document.getElementById('po-total').textContent     = orders.length;
+    document.getElementById('po-pending').textContent   = orders.filter(o=>['placed','confirmed'].includes(o.status)).length;
+    document.getElementById('po-delayed').textContent   = delayed.length;
+    document.getElementById('po-suppliers').textContent = suppliers.length;
+
+    // Delayed alert
+    if (delayed.length > 0) {
+      const el = document.getElementById('po-alerts');
+      if(el) el.innerHTML = `<div class="alert alert-warning">⚠️ ${delayed.length} shipment(s) are delayed. Check the Supply Chain Manager view for details.</div>`;
+    }
+
+    renderOrdersTable(orders);
+    renderSuppliersTable(suppliers);
+
+    // Populate dropdowns
+    const supSel  = document.getElementById('po-supplierId');
+    const partSel = document.getElementById('po-partId');
+    if (supSel)  suppliers.forEach(s => { supSel.innerHTML  += `<option value="${s.supplier_id}">${s.business_name}</option>`; });
+    const parts = [...new Set(orders.map(o=>({id:o.part_id,name:o.part_name}))
+      .filter(Boolean).map(JSON.stringify))].map(JSON.parse);
+    const partList = await fetch(`/api/suppliers`).catch(()=>null);
+    // fallback: use order parts
+    if (partSel) parts.forEach(p => { partSel.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
+
+    document.getElementById('po-orderDate').valueAsDate = new Date();
+  } catch(err) { console.error(err); }
+}
+
+function renderOrdersTable(orders) {
+  const tbody = document.getElementById('po-ordersTable');
+  if (!tbody) return;
+  if (!orders.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px">No orders found.</td></tr>'; return; }
+  tbody.innerHTML = orders.map(o => `
+    <tr>
+      <td><strong>${o.order_id}</strong></td>
+      <td>${o.supplier_name||o.supplier_id}</td>
+      <td>${o.part_name||o.part_id}</td>
+      <td>${fmt(o.desired_delivery)}</td>
+      <td>${badge(o.status)}</td>
+      <td>
+        ${o.status !== 'completed' ? `
+        <select onchange="updateOrderStatus('${o.order_id}',this.value)" class="btn btn-outline btn-sm" style="padding:4px">
+          <option value="">Update…</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="dispatched">Dispatched</option>
+          <option value="delivered">Delivered</option>
+          <option value="completed">Completed</option>
+        </select>` : '<span style="color:#94a3b8;font-size:12px">Done</span>'}
+      </td>
+    </tr>`).join('');
+}
+
+function renderSuppliersTable(suppliers) {
+  const tbody = document.getElementById('po-suppliersTable');
+  if (!tbody) return;
+  tbody.innerHTML = suppliers.map(s => `
+    <tr>
+      <td><strong>${s.supplier_id}</strong></td>
+      <td>${s.business_name}</td>
+      <td>${badge(s.accreditation?.toLowerCase()||'pending')}</td>
+      <td><a href="mailto:${s.contact_email}" style="color:#2563eb">${s.contact_email||'—'}</a></td>
+      <td>${s.part_count||0}</td>
+    </tr>`).join('');
+}
+
+function filterOrders() {
+  const filter = document.getElementById('po-statusFilter')?.value;
+  renderOrdersTable(filter ? allOrders.filter(o=>o.status===filter) : allOrders);
+}
+
+async function updateOrderStatus(orderId, status) {
+  if (!status) return;
+  try {
+    await Orders.updateStatus(orderId, status);
+    showMsg('po-alerts','success',`✅ Order ${orderId} updated to "${status}"`);
+    allOrders = await Orders.list();
+    renderOrdersTable(allOrders);
+  } catch(err) { showMsg('po-alerts','error',`❌ ${err.message}`); }
+}
+
+async function createOrder() {
+  const order = {
+    order_id:         document.getElementById('po-orderId')?.value.trim(),
+    supplier_id:      document.getElementById('po-supplierId')?.value,
+    part_id:          document.getElementById('po-partId')?.value,
+    order_date:       document.getElementById('po-orderDate')?.value,
+    desired_delivery: document.getElementById('po-desiredDelivery')?.value
+  };
+  if (!order.order_id || !order.supplier_id || !order.part_id || !order.order_date) {
+    showMsg('po-formMsg','error','Please fill in all required fields.'); return;
+  }
+  try {
+    await Orders.create(order);
+    showMsg('po-formMsg','success',`✅ Order ${order.order_id} created successfully.`);
+    document.getElementById('po-orderId').value = '';
+    allOrders = await Orders.list();
+    document.getElementById('po-total').textContent = allOrders.length;
+    renderOrdersTable(allOrders);
+  } catch(err) { showMsg('po-formMsg','error',`❌ ${err.message}`); }
+}
+
+// ══════════════════════════════════════════════════════════
+// QUALITY INSPECTOR
+// ══════════════════════════════════════════════════════════
+async function loadQualityData() {
+  try {
+    const [reports, certs] = await Promise.all([QCReports.list(), Certifications.list()]);
+    allQCReports = reports;
+
+    const pass = reports.filter(r=>r.overallResult==='pass').length;
+    const fail = reports.filter(r=>r.overallResult==='fail').length;
+    document.getElementById('qi-pass').textContent     = pass;
+    document.getElementById('qi-fail').textContent     = fail;
+    document.getElementById('qi-certs').textContent    = certs.length;
+    document.getElementById('qi-approved').textContent = certs.filter(c=>c.is_immutable).length;
+
+    renderQCTable(reports);
+    renderCertsTable(certs, 'qi-certsTable', true);
+  } catch(err) { console.error(err); }
+}
+
+function renderQCTable(reports) {
+  const tbody = document.getElementById('qi-reportsTable');
+  if (!tbody) return;
+  if (!reports.length) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No reports found.</td></tr>'; return; }
+  tbody.innerHTML = reports.map(r => `
+    <tr>
+      <td><strong>${r.reportID}</strong></td>
+      <td>${r.partID}</td>
+      <td><span style="font-size:11px;color:#64748b;text-transform:capitalize">${(r.inspectionType||'').replace('_',' ')}</span></td>
+      <td>${badge(r.overallResult)}</td>
+      <td>${fmt(r.timestamp)}</td>
+    </tr>`).join('');
+}
+
+function filterQCReports() {
+  const f = document.getElementById('qi-resultFilter')?.value;
+  renderQCTable(f ? allQCReports.filter(r=>r.overallResult===f) : allQCReports);
+}
+
+function renderCertsTable(certs, tbodyId, showAction=false) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  if (!certs.length) { tbody.innerHTML=`<tr><td colspan="${showAction?6:6}" style="text-align:center;color:#94a3b8;padding:20px">No certifications found.</td></tr>`; return; }
+  tbody.innerHTML = certs.map(c => `
+    <tr>
+      <td><strong>${c.cert_id}</strong></td>
+      <td>${c.part_name||c.part_id}</td>
+      <td>${c.inspector_name||c.inspector_id||'—'}</td>
+      <td>${badge(c.status)}</td>
+      <td>${c.is_immutable ? '🔒 Locked' : '🔓 Editable'}</td>
+      ${showAction ? `<td>${!c.is_immutable && c.status==='pending' ?
+        `<button class="btn btn-success btn-sm" onclick="approveCert('${c.cert_id}')">Approve & Lock</button>` :
+        '<span style="color:#94a3b8;font-size:11px">—</span>'}</td>` : `<td>${fmt(c.approved_at)}</td>`}
+    </tr>`).join('');
+}
+
+async function createQCReport() {
+  const doc = {
+    reportID:      document.getElementById('qi-reportId')?.value.trim(),
+    partID:        document.getElementById('qi-partId')?.value.trim(),
+    inspectionType:document.getElementById('qi-type')?.value,
+    overallResult: document.getElementById('qi-result')?.value,
+    notes:         document.getElementById('qi-notes')?.value
+  };
+  if (!doc.reportID || !doc.partID) { showMsg('qi-formMsg','error','Report ID and Part ID are required.'); return; }
+  try {
+    await QCReports.create(doc);
+    showMsg('qi-formMsg','success',`✅ Report ${doc.reportID} submitted.`);
+    document.getElementById('qi-reportId').value = '';
+    document.getElementById('qi-notes').value = '';
+    allQCReports = await QCReports.list();
+    renderQCTable(allQCReports);
+    const p = allQCReports.filter(r=>r.overallResult==='pass').length;
+    const f = allQCReports.filter(r=>r.overallResult==='fail').length;
+    document.getElementById('qi-pass').textContent = p;
+    document.getElementById('qi-fail').textContent = f;
+  } catch(err) { showMsg('qi-formMsg','error',`❌ ${err.message}`); }
+}
+
+async function approveCert(certId) {
+  if (!confirm(`Approve and permanently lock certification ${certId}? This cannot be undone.`)) return;
+  try {
+    await Certifications.approve(certId);
+    showMsg('qi-formMsg','success',`🔒 Certification ${certId} approved and locked.`);
+    const certs = await Certifications.list();
+    renderCertsTable(certs, 'qi-certsTable', true);
+    document.getElementById('qi-approved').textContent = certs.filter(c=>c.is_immutable).length;
+  } catch(err) { showMsg('qi-formMsg','error',`❌ ${err.message}`); }
+}
+
+// ══════════════════════════════════════════════════════════
+// SUPPLY CHAIN MANAGER
+// ══════════════════════════════════════════════════════════
+async function loadSCMData() {
+  try {
+    const [shipments, delayed, perf] = await Promise.all([
+      Shipments.list(), Orders.delayed(), Suppliers.performance()
+    ]);
+
+    document.getElementById('scm-total').textContent   = shipments.length;
+    document.getElementById('scm-transit').textContent = shipments.filter(s=>s.current_status==='in_transit').length;
+    document.getElementById('scm-delayed').textContent = delayed.length;
+    const avg = perf.length ? Math.round(perf.reduce((a,b)=>a+(parseFloat(b.on_time_pct)||0),0)/perf.length) : 0;
+    document.getElementById('scm-ontime').textContent  = avg + '%';
+
+    // Shipments table
+    const stbody = document.getElementById('scm-shipmentsTable');
+    if (stbody) stbody.innerHTML = shipments.map(s=>`
+      <tr>
+        <td><strong>${s.shipment_id}</strong></td>
+        <td>${s.order_id}</td>
+        <td>${s.supplier_name||s.supplier_id}</td>
+        <td>${s.part_name||s.part_id}</td>
+        <td style="font-size:11px;color:#64748b">${s.tracking_number}</td>
+        <td>${fmt(s.eta)}</td>
+        <td>${badge(s.current_status)}</td>
+      </tr>`).join('');
+
+    // Delayed table
+    const dtbody = document.getElementById('scm-delayedTable');
+    if (dtbody) {
+      if (!delayed.length) { dtbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#16a34a;padding:20px">✅ No delayed shipments!</td></tr>'; }
+      else dtbody.innerHTML = delayed.map(d=>`
+        <tr>
+          <td><strong>${d.shipment_id}</strong></td>
+          <td>${d.supplier_name}</td>
+          <td>${d.part_name}</td>
+          <td>${fmt(d.eta)}</td>
+          <td><span style="color:#ef4444;font-weight:700">+${d.days_delayed} days</span></td>
+        </tr>`).join('');
+    }
+
+    // Bar chart
+    setTimeout(() => {
+      const ctx = document.getElementById('scm-perfChart');
+      if (!ctx) return;
+      if (perfChart) perfChart.destroy();
+      perfChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: perf.map(p=>p.business_name),
+          datasets: [{
+            label: 'On-Time Delivery %',
+            data:  perf.map(p=>parseFloat(p.on_time_pct)||0),
+            backgroundColor: perf.map(p=>(parseFloat(p.on_time_pct)||0)>=80?'rgba(22,163,74,0.7)':'rgba(239,68,68,0.7)'),
+            borderRadius: 6, borderSkipped: false
+          }]
+        },
+        options: { responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}} }
+      });
+    }, 100);
+  } catch(err) { console.error(err); }
+}
+
+// ══════════════════════════════════════════════════════════
+// EQUIPMENT ENGINEER
+// ══════════════════════════════════════════════════════════
+async function loadEngineerData() {
+  try {
+    const [equip, iotLatest, alerts] = await Promise.all([
+      Equipment.list(), IoT.latest(), IoT.alerts()
+    ]);
+
+    const ok       = equip.filter(e=>e.status==='ok').length;
+    const warning  = equip.filter(e=>e.status==='warning').length;
+    const critical = equip.filter(e=>e.status==='critical').length;
+    document.getElementById('ee-ok').textContent       = ok;
+    document.getElementById('ee-warning').textContent  = warning;
+    document.getElementById('ee-critical').textContent = critical;
+    document.getElementById('ee-total').textContent    = equip.length;
+
+    // Alert banner
+    const alertBanner = document.getElementById('ee-alertsBanner');
+    if (alertBanner && alerts.length > 0) {
+      alertBanner.innerHTML = alerts.map(a=>`
+        <div class="alert alert-${a.alerts.some(x=>x.severity==='critical'&&x.breached)?'error':'warning'}">
+          🚨 <strong>${a.equipmentID}</strong> — ${a.alerts.filter(x=>x.breached).map(x=>`${x.parameter} breached (threshold: ${x.threshold})`).join(', ')}
+        </div>`).join('');
+    }
+
+    // Equipment cards
+    const grid = document.getElementById('ee-equipGrid');
+    if (grid) {
+      grid.innerHTML = equip.map(e => {
+        const iot = iotLatest.find(l=>l.equipmentID===e.equipment_id);
+        return `
+          <div class="equip-card ${e.status}">
+            <h4>${e.name}</h4>
+            <div class="facility">📍 ${e.facility_name||e.facility_id} · ${badge(e.status)}</div>
+            ${iot ? `<div class="readings">
+              <div class="reading"><div class="r-val">${iot.readings.temperature_C}°C</div><div class="r-label">Temp</div></div>
+              <div class="reading"><div class="r-val">${iot.readings.vibration_ms2}</div><div class="r-label">Vibration</div></div>
+              <div class="reading"><div class="r-val">${iot.readings.pressure_bar}</div><div class="r-label">Pressure</div></div>
+              <div class="reading"><div class="r-val">${iot.readings.cycleCount?.toLocaleString()||'—'}</div><div class="r-label">Cycles</div></div>
+            </div>` : '<div style="color:#94a3b8;font-size:12px;margin-top:8px">No IoT data available</div>'}
+          </div>`;
+      }).join('');
+    }
+
+    // IoT table
+    const tbody = document.getElementById('ee-iotTable');
+    if (tbody) tbody.innerHTML = iotLatest.map(l=>`
+      <tr>
+        <td><strong>${l.equipmentID}</strong></td>
+        <td>${l.readings.temperature_C}°C</td>
+        <td>${l.readings.vibration_ms2}</td>
+        <td>${l.readings.pressure_bar} bar</td>
+        <td>${l.alerts.filter(a=>a.breached).length > 0 ?
+          `<span style="color:#ef4444;font-weight:700">⚠️ ${l.alerts.filter(a=>a.breached).length} alert(s)</span>` :
+          '<span style="color:#16a34a">✅ Normal</span>'}</td>
+      </tr>`).join('');
+
+    // Doughnut chart
+    setTimeout(() => {
+      const ctx = document.getElementById('ee-statusChart');
+      if (!ctx) return;
+      if (statusChart) statusChart.destroy();
+      statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Operational','Warning','Critical'],
+          datasets: [{ data:[ok,warning,critical],
+            backgroundColor:['#16a34a','#f59e0b','#ef4444'],
+            borderWidth:2, borderColor:'#fff' }]
+        },
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom' } } }
+      });
+    }, 100);
+  } catch(err) { console.error(err); }
+}
+
+// ══════════════════════════════════════════════════════════
+// AUDITOR
+// ══════════════════════════════════════════════════════════
+async function loadAuditorData() {
+  try {
+    const [certs, logs, reports] = await Promise.all([
+      Certifications.list(), Audit.list({ limit:50 }), QCReports.list()
+    ]);
+
+    document.getElementById('aud-total').textContent    = certs.length;
+    document.getElementById('aud-approved').textContent = certs.filter(c=>c.status==='approved').length;
+    document.getElementById('aud-pending').textContent  = certs.filter(c=>c.status==='pending').length;
+    document.getElementById('aud-logs').textContent     = logs.length;
+
+    renderCertsTable(certs, 'aud-certsTable', false);
+
+    const ltbody = document.getElementById('aud-logTable');
+    if (ltbody) ltbody.innerHTML = logs.map(l=>`
+      <tr>
+        <td style="font-size:11px;white-space:nowrap">${fmtTime(l.created_at)}</td>
+        <td>${l.full_name||l.emp_id}<br><span style="font-size:10px;color:#94a3b8">${l.role||''}</span></td>
+        <td><strong>${l.action}</strong></td>
+        <td>${l.target_table||'—'} ${l.target_record ? `<span style="color:#64748b;font-size:11px">(${l.target_record})</span>` : ''}</td>
+      </tr>`).join('');
+
+    const rtbody = document.getElementById('aud-reportsTable');
+    if (rtbody) rtbody.innerHTML = reports.map(r=>`
+      <tr>
+        <td><strong>${r.reportID}</strong></td>
+        <td>${r.partID}</td>
+        <td>${r.inspectorID}</td>
+        <td style="text-transform:capitalize;font-size:12px">${(r.inspectionType||'').replace(/_/g,' ')}</td>
+        <td>${badge(r.overallResult)}</td>
+        <td>${fmt(r.timestamp)}</td>
+        <td style="text-align:center">${r.versionHistory?.length||1}</td>
+      </tr>`).join('');
+  } catch(err) { console.error(err); }
+}
+</script>
+</body>
+</html>
