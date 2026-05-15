@@ -99,7 +99,7 @@
   <div class="loading" id="loading">Authenticating…</div>
 
   <div class="demo-hint">
-    <p>Demo accounts (password: <strong style="color:#94a3b8">password123</strong>)</p>
+    <p>Demo accounts (password: <strong style="color:#94a3b8">password</strong>)</p>
     <div class="demo-roles">
       <span class="demo-role" onclick="fillDemo('sarah.mitchell@aeronetb.com')">Procurement</span>
       <span class="demo-role" onclick="fillDemo('elena.petrov@aeronetb.com')">QC Inspector</span>
@@ -115,7 +115,7 @@
 
   function fillDemo(email) {
     document.getElementById('email').value = email;
-    document.getElementById('password').value = 'password123';
+    document.getElementById('password').value = 'password';
   }
 
   async function handleLogin() {
