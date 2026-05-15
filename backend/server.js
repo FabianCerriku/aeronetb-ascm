@@ -18,11 +18,11 @@ function req(p) {
 
 const authRoutes          = require('./routes/auth');
 const supplierRoutes      = require('./routes/suppliers');
+const partRoutes          = require('./routes/parts');
 const orderRoutes         = require('./routes/orders');
 const shipmentRoutes      = require('./routes/shipments');
 const qcReportRoutes      = require('./routes/qcreports');
 const certRoutes          = require('./routes/certifications');
-const partRoutes  = require('./routes/parts');
 
 const { iotRouter, equipRouter, auditRouter } = require('./routes/iot');
 
@@ -37,6 +37,7 @@ app.use(express.json());
 
 app.use('/api/auth',           authRoutes);
 app.use('/api/suppliers',      supplierRoutes);
+app.use('/api/parts',          partRoutes);
 app.use('/api/orders',         orderRoutes);
 app.use('/api/shipments',      shipmentRoutes);
 app.use('/api/qc-reports',     qcReportRoutes);
@@ -44,7 +45,6 @@ app.use('/api/certifications', certRoutes);
 app.use('/api/iot',            iotRouter);
 app.use('/api/equipment',      equipRouter);
 app.use('/api/audit',          auditRouter);
-app.use('/api/parts', partRoutes);
 
 app.get('/api/health', async (req, res) => {
   try {
