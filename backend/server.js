@@ -22,6 +22,8 @@ const orderRoutes         = require('./routes/orders');
 const shipmentRoutes      = require('./routes/shipments');
 const qcReportRoutes      = require('./routes/qcreports');
 const certRoutes          = require('./routes/certifications');
+const partRoutes  = require('./routes/parts');
+
 const { iotRouter, equipRouter, auditRouter } = require('./routes/iot');
 
 const pool             = require('./db/postgres');
@@ -42,6 +44,7 @@ app.use('/api/certifications', certRoutes);
 app.use('/api/iot',            iotRouter);
 app.use('/api/equipment',      equipRouter);
 app.use('/api/audit',          auditRouter);
+app.use('/api/parts', partRoutes);
 
 app.get('/api/health', async (req, res) => {
   try {
