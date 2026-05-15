@@ -1,7 +1,7 @@
 // ── API base URL ──────────────────────────────────────────
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api'
-  : 'https://aeronetb-api-aici.onrender.com/api';
+  : 'https://dashboard.render.com/web/srv-d826bobtqb8s73caaig0/api';
 
 // ── Auth helpers ──────────────────────────────────────────
 function getToken()   { return localStorage.getItem('token'); }
